@@ -2,13 +2,10 @@
 
 import { authClient } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
-interface Messages {
-  _id: string;
-  content: string;
-  userid: string;
-  userName: string;
-  createdAt: string;
-}
+import { FaRegTrashAlt } from "react-icons/fa";
+import  Messages  from "@/types/Messages";
+import Cardmessage from "./CardMessage";
+
 export default function ChatMessages() {
   const [messages, setMessages] = useState<Messages[]>([]);
   const { data: session, isPending } = authClient.useSession();
@@ -34,15 +31,10 @@ export default function ChatMessages() {
   return (
     <div>
       {messages.map((m) => {
-        const isOwn = m.userid === session?.user.id
-         console.log(isOwn)
+        const isOwn = m.userid === session?.user.id;
+        console.log(isOwn);
         return (
-          <div key={m._id}
-          className={`flex flex-col rounded ${isOwn ? "items-end" : "items-start"}`}>
-            {!isOwn && <p> {m.userName}</p>}
-            <p>{m.content}</p>
-            <p>{new Date(m.createdAt).toLocaleTimeString("fr-FR")}</p>
-          </div>
+         <Cardmessage m={m} userid={session?.user.id} key={m._id}></Cardmessage>
         );
       })}
     </div>

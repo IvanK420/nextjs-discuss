@@ -2,6 +2,7 @@ import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/mongodb";
 import { username } from "better-auth/plugins";
 import { error } from "console";
+import { ObjectId } from "mongodb";
 import { headers } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -10,6 +11,7 @@ export async function GET() {
   const messages = await db.collection("message").find().toArray();
   return NextResponse.json(messages);
 }
+
 export async function POST(request: NextRequest) {
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -22,14 +24,36 @@ export async function POST(request: NextRequest) {
   const { content } = await request.json();
   if (!content) {
     return NextResponse.json({ error: "message vide" }, { status: 400 });
-  };
+  }
   const db = await getDb();
   const message = {
     content: content,
-    createdAt : new Date(),
-    userid : session.user.id,
-    userName : session.user.name
+    createdAt: new Date(),
+    userid: session.user.id,
+    userName: session.user.name,
   };
   await db.collection("message").insertOne(message);
-  return NextResponse.json(message, {status:201})
+  return NextResponse.json(message, { status: 201 });
+}
+
+export async function DELETE(request: NextRequest) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  }
+
+  const { _id, userid } = await request.json();
+  if (!_id || !userid) {
+    return NextResponse.json({ error: "Json non valide" }, { status: 4000 });
+  }
+  if(userid != session.user.id){
+    return NextResponse.json({error: "Non autorisé"},{status:401})
+  }
+  const db = await getDb();
+  await db.collection("message").deleteOne({_id: new ObjectId(_id)})
+  
+  return NextResponse.json({_id}, {status:200})
 }
